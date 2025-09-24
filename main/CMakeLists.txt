@@ -1,2 +1,6 @@
-idf_component_register(SRCS "vapicon-2025-hardware-workshop.c"
-                    INCLUDE_DIRS ".")
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+file(GLOB SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
+
+idf_component_register(SRCS ${SOURCES}
+                       INCLUDE_DIRS ".")
