@@ -2,14 +2,11 @@
 #include <driver/i2c_master.h>
 #include <driver/i2s_std.h>
 #include <driver/spi_master.h>
-
-#include <esp_log.h>
-
-#include <esp_lvgl_port.h>
-
 #include <esp_lcd_gc9a01.h>
 #include <esp_lcd_panel_io.h>
 #include <esp_lcd_panel_ops.h>
+#include <esp_log.h>
+#include <esp_lvgl_port.h>
 
 #include "vapi-icon.h"
 
@@ -19,6 +16,7 @@
 #define DISPLAY_WIDTH 128
 #define DISPLAY_HEIGHT 128
 
+// clang-format off
 static const gc9a01_lcd_init_cmd_t gc9107_lcd_init_cmds[] = {
     {0xfe, (uint8_t[]){0x00}, 0, 0},
     {0xef, (uint8_t[]){0x00}, 0, 0},
@@ -40,24 +38,26 @@ static const gc9a01_lcd_init_cmd_t gc9107_lcd_init_cmds[] = {
     {0xf0, (uint8_t[]){0x1f, 0x28, 0x04, 0x3e, 0x2a, 0x2e, 0x20, 0x00, 0x0c, 0x06, 0x00, 0x1c, 0x1f, 0x0f}, 14, 0},
     {0xf1, (uint8_t[]){0x00, 0x2d, 0x2f, 0x3c, 0x6f, 0x1c, 0x0b, 0x00, 0x00, 0x00, 0x07, 0x0d, 0x11, 0x0f}, 14, 0},
 };
+// clang-format on
 
 class Lp5562 {
-public:
+ public:
   Lp5562(i2c_master_bus_handle_t i2c_bus, uint8_t addr) {
     i2c_device_config_t i2c_device_cfg = {
         .dev_addr_length = I2C_ADDR_BIT_LEN_7,
         .device_address = addr,
         .scl_speed_hz = 400 * 1000,
         .scl_wait_us = 0,
-        .flags = { .disable_ack_check = 0 },
+        .flags = {.disable_ack_check = 0},
     };
-    ESP_ERROR_CHECK( i2c_master_bus_add_device(i2c_bus, &i2c_device_cfg, &i2c_device_));
+    ESP_ERROR_CHECK(
+        i2c_master_bus_add_device(i2c_bus, &i2c_device_cfg, &i2c_device_));
     assert(i2c_device_ != NULL);
 
-    WriteReg(0x00, 0B01000000); // Set chip_en to 1
-    WriteReg(0x08, 0B00000001); // Enable internal clock
-    WriteReg(0x70, 0B00000000); // Configure all LED outputs to be controlled
-                                // from I2C registers
+    WriteReg(0x00, 0B01000000);  // Set chip_en to 1
+    WriteReg(0x08, 0B00000001);  // Enable internal clock
+    WriteReg(0x70, 0B00000000);  // Configure all LED outputs to be controlled
+                                 // from I2C registers
 
     // PWM clock frequency 558 Hz
     auto data = ReadReg(0x08);
@@ -72,7 +72,7 @@ public:
     WriteReg(0x0E, brightness);
   }
 
-private:
+ private:
   i2c_master_dev_handle_t i2c_device_;
 
   void WriteReg(uint8_t reg, uint8_t value) {
@@ -82,29 +82,28 @@ private:
 
   uint8_t ReadReg(uint8_t reg) {
     uint8_t buffer[1];
-    ESP_ERROR_CHECK(i2c_master_transmit_receive(i2c_device_, &reg, 1, buffer, 1, 100));
+    ESP_ERROR_CHECK(
+        i2c_master_transmit_receive(i2c_device_, &reg, 1, buffer, 1, 100));
     return buffer[0];
   }
 };
 
 static lv_obj_t *spinning_img;
-static void spinner_set_angle(void *obj, int32_t v)
-{
+static void spinner_set_angle(void *obj, int32_t v) {
   lv_image_set_rotation((lv_obj_t *)obj, v);
 }
 
-
 class M5AtomS3 {
-public:
+ public:
   i2c_master_bus_handle_t i2c_bus_;
   i2c_master_bus_handle_t i2c_bus_internal_;
   Lp5562 *lp5562_ = nullptr;
 
   M5AtomS3() {
-      this->InitializeI2c();
-      this->InitializeLp5562();
-      this->InitializeSpi();
-      this->InitializeGc9107Display();
+    this->InitializeI2c();
+    this->InitializeLp5562();
+    this->InitializeSpi();
+    this->InitializeGc9107Display();
   }
 
   void InitializeI2c() {
@@ -116,7 +115,11 @@ public:
         .glitch_ignore_cnt = 7,
         .intr_priority = 0,
         .trans_queue_depth = 0,
-        .flags = { .enable_internal_pullup = 1, .allow_pd = 0, },
+        .flags =
+            {
+                .enable_internal_pullup = 1,
+                .allow_pd = 0,
+            },
     };
     ESP_ERROR_CHECK(i2c_new_master_bus(&i2c_bus_cfg, &i2c_bus_));
 
@@ -151,12 +154,14 @@ public:
     io_config.trans_queue_depth = 10;
     io_config.lcd_cmd_bits = 8;
     io_config.lcd_param_bits = 8;
-    ESP_ERROR_CHECK(esp_lcd_new_panel_io_spi(SPI3_HOST, &io_config, &io_handle));
+    ESP_ERROR_CHECK(
+        esp_lcd_new_panel_io_spi(SPI3_HOST, &io_config, &io_handle));
 
     esp_lcd_panel_handle_t panel_handle = NULL;
     gc9a01_vendor_config_t gc9107_vendor_config = {
         .init_cmds = gc9107_lcd_init_cmds,
-        .init_cmds_size = sizeof(gc9107_lcd_init_cmds) / sizeof(gc9a01_lcd_init_cmd_t),
+        .init_cmds_size =
+            sizeof(gc9107_lcd_init_cmds) / sizeof(gc9a01_lcd_init_cmd_t),
     };
     esp_lcd_panel_dev_config_t panel_config = {};
     panel_config.reset_gpio_num = GPIO_NUM_48;
@@ -164,7 +169,8 @@ public:
     panel_config.bits_per_pixel = 16;
     panel_config.vendor_config = &gc9107_vendor_config;
 
-    ESP_ERROR_CHECK( esp_lcd_new_panel_gc9a01(io_handle, &panel_config, &panel_handle));
+    ESP_ERROR_CHECK(
+        esp_lcd_new_panel_gc9a01(io_handle, &panel_config, &panel_handle));
     ESP_ERROR_CHECK(esp_lcd_panel_reset(panel_handle));
     ESP_ERROR_CHECK(esp_lcd_panel_init(panel_handle));
     ESP_ERROR_CHECK(esp_lcd_panel_disp_on_off(panel_handle, true));
@@ -172,69 +178,70 @@ public:
     CreateLVGL(io_handle, panel_handle, DISPLAY_WIDTH, DISPLAY_HEIGHT);
   }
 
-  void CreateLVGL(esp_lcd_panel_io_handle_t panel_io, esp_lcd_panel_handle_t panel, int width, int height) {
-      lv_init();
+  void CreateLVGL(esp_lcd_panel_io_handle_t panel_io,
+                  esp_lcd_panel_handle_t panel, int width, int height) {
+    lv_init();
 
-      lvgl_port_cfg_t port_cfg = ESP_LVGL_PORT_INIT_CONFIG();
-      lvgl_port_init(&port_cfg);
+    lvgl_port_cfg_t port_cfg = ESP_LVGL_PORT_INIT_CONFIG();
+    lvgl_port_init(&port_cfg);
 
-      const lvgl_port_display_cfg_t display_cfg = {
-          .io_handle = panel_io,
-          .panel_handle = panel,
-          .control_handle = nullptr,
-          .buffer_size = static_cast<uint32_t>(width * 20),
-          .double_buffer = false,
-          .trans_size = 0,
-          .hres = static_cast<uint32_t>(width),
-          .vres = static_cast<uint32_t>(height),
-          .monochrome = false,
-          .rotation =
-          {
-              .swap_xy = false,
-              .mirror_x = false,
-              .mirror_y = false,
-          },
-          .color_format = LV_COLOR_FORMAT_RGB565,
-          .flags =
-          {
-              .buff_dma = 1,
-              .buff_spiram = 0,
-              .sw_rotate = 0,
-              .swap_bytes = 1,
-              .full_refresh = 0,
-              .direct_mode = 0,
-          },
-      };
+    const lvgl_port_display_cfg_t display_cfg = {
+        .io_handle = panel_io,
+        .panel_handle = panel,
+        .control_handle = nullptr,
+        .buffer_size = static_cast<uint32_t>(width * 20),
+        .double_buffer = false,
+        .trans_size = 0,
+        .hres = static_cast<uint32_t>(width),
+        .vres = static_cast<uint32_t>(height),
+        .monochrome = false,
+        .rotation =
+            {
+                .swap_xy = false,
+                .mirror_x = false,
+                .mirror_y = false,
+            },
+        .color_format = LV_COLOR_FORMAT_RGB565,
+        .flags =
+            {
+                .buff_dma = 1,
+                .buff_spiram = 0,
+                .sw_rotate = 0,
+                .swap_bytes = 1,
+                .full_refresh = 0,
+                .direct_mode = 0,
+            },
+    };
 
-      auto display = lvgl_port_add_disp(&display_cfg);
-      assert(display != nullptr);
+    auto display = lvgl_port_add_disp(&display_cfg);
+    assert(display != nullptr);
 
-      lvgl_port_lock(portMAX_DELAY);
+    lvgl_port_lock(portMAX_DELAY);
 
-      lv_display_set_offset(display, 0, 32);
-      lv_obj_t *scr = lv_disp_get_scr_act(display);
+    lv_display_set_offset(display, 0, 32);
+    lv_obj_t *scr = lv_disp_get_scr_act(display);
 
-      lv_obj_set_style_bg_color(scr, lv_color_black(), LV_PART_MAIN);
-      lv_obj_set_style_bg_opa(scr, LV_OPA_COVER, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(scr, lv_color_black(), LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(scr, LV_OPA_COVER, LV_PART_MAIN);
 
-      spinning_img = lv_image_create(scr);
-      lv_image_set_src(spinning_img, &vapi_icon);
-      lv_obj_center(spinning_img);
+    spinning_img = lv_image_create(scr);
+    lv_image_set_src(spinning_img, &vapi_icon);
+    lv_obj_center(spinning_img);
 
-      lv_image_set_pivot(spinning_img, vapi_icon.header.w / 2, vapi_icon.header.h / 2);
+    lv_image_set_pivot(spinning_img, vapi_icon.header.w / 2,
+                       vapi_icon.header.h / 2);
 
-      lv_image_set_antialias(spinning_img, true);
+    lv_image_set_antialias(spinning_img, true);
 
-      lv_anim_t a;
-      lv_anim_init(&a);
-      lv_anim_set_var(&a, spinning_img);
-      lv_anim_set_exec_cb(&a, spinner_set_angle);
-      lv_anim_set_duration(&a, 5000);
-      lv_anim_set_values(&a, 0, 3600);
-      lv_anim_set_repeat_count(&a, LV_ANIM_REPEAT_INFINITE);
-      lv_anim_start(&a);
+    lv_anim_t a;
+    lv_anim_init(&a);
+    lv_anim_set_var(&a, spinning_img);
+    lv_anim_set_exec_cb(&a, spinner_set_angle);
+    lv_anim_set_duration(&a, 5000);
+    lv_anim_set_values(&a, 0, 3600);
+    lv_anim_set_repeat_count(&a, LV_ANIM_REPEAT_INFINITE);
+    lv_anim_start(&a);
 
-      lvgl_port_unlock();
+    lvgl_port_unlock();
   }
 };
-

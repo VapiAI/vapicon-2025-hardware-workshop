@@ -1,0 +1,20 @@
+name: Build
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v2
+      with:
+        submodules: 'recursive'
+
+    - name: Build
+      shell: bash
+      run: docker run -v $PWD:/project -w /project espressif/idf:latest /bin/bash -c 'idf.py build'
