@@ -1,0 +1,3 @@
+[submodule "deps/libpeer"]
+	path = deps/libpeer
+	url = https://github.com/sean-der/libpeer.git

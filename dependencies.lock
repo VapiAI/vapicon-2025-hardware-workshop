@@ -48,10 +48,18 @@ dependencies:
       registry_url: https://components.espressif.com
       type: service
     version: 9.3.0
+  sepfy/srtp:
+    component_hash: 5a75f043e29104975e3a0191e404a957a4d9088551842e16426a5b72e14610ae
+    dependencies: []
+    source:
+      registry_url: https://components.espressif.com/
+      type: service
+    version: 2.3.0
 direct_dependencies:
 - espressif/esp_lcd_gc9a01
 - espressif/esp_lvgl_port
 - idf
-manifest_hash: 48f56251b6fde67480e649d8a379f6e98514d96f51db2708aca45f2ad62d9845
+- sepfy/srtp
+manifest_hash: f0d51b5dd44c544b61f46f6f1d59ae79ea54c558a33a2e046c9e82583224e8f2
 target: esp32s3
 version: 2.0.0
