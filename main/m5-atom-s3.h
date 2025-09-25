@@ -88,15 +88,12 @@ class Lp5562 {
   }
 };
 
-static lv_obj_t *spinning_img;
-static void spinner_set_angle(void *obj, int32_t v) {
-  lv_image_set_rotation((lv_obj_t *)obj, v);
-}
-
 class M5AtomS3 {
  public:
   i2c_master_bus_handle_t i2c_bus_;
   i2c_master_bus_handle_t i2c_bus_internal_;
+
+  lv_obj_t *spinning_img = nullptr;
   Lp5562 *lp5562_ = nullptr;
 
   M5AtomS3() {
@@ -104,6 +101,10 @@ class M5AtomS3 {
     this->InitializeLp5562();
     this->InitializeSpi();
     this->InitializeGc9107Display();
+  }
+
+  static void spinner_set_angle(void *obj, int32_t v) {
+      lv_image_set_rotation((lv_obj_t *)obj, v);
   }
 
   void InitializeI2c() {
