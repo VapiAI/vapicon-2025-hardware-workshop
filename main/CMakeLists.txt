@@ -4,7 +4,7 @@ file(GLOB SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
 
 idf_component_register(SRCS ${SOURCES}
                        INCLUDE_DIRS "."
-                       PRIV_REQUIRES peer)
+                       PRIV_REQUIRES peer esp_wifi nvs_flash)
 
 idf_component_get_property(lib sepfy__srtp COMPONENT_LIB)
 target_compile_options(${lib} PRIVATE -Wno-error=incompatible-pointer-types)

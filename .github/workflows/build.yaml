@@ -17,4 +17,4 @@ jobs:
 
     - name: Build
       shell: bash
-      run: docker run -v $PWD:/project -w /project espressif/idf:latest /bin/bash -c 'idf.py build'
+      run: docker run -v $PWD:/project -w /project espressif/idf:v5.5.1 /bin/bash -c 'idf.py build'

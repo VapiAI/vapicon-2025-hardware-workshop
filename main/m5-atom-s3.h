@@ -103,7 +103,8 @@ class M5AtomS3 {
     };
     i2c_master_dev_handle_t i2c_device;
 
-    ESP_ERROR_CHECK(i2c_master_bus_add_device(i2c_bus_internal_, &i2c_device_cfg, &i2c_device));
+    ESP_ERROR_CHECK(i2c_master_bus_add_device(i2c_bus_internal_,
+                                              &i2c_device_cfg, &i2c_device));
     assert(i2c_device != NULL);
 
     WriteReg(i2c_device, 0x00, 0B01000000);  // Set chip_en to 1

@@ -1,0 +1,15 @@
+menu "VapiCon 2025 Hardware Workshop Configuration"
+
+    config WIFI_NAME
+        string "WiFi Name"
+        default ""
+        help
+            Enter your Wifi network name
+
+    config WIFI_PASSWORD
+        string "WiFi Name"
+        default ""
+        help
+            Enter your Wifi network password
+
+endmenu
