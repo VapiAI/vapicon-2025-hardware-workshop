@@ -1,10 +1,8 @@
-#include <stdio.h>
-#include <vector>
-
 #include <driver/gpio.h>
 #include <driver/i2c_master.h>
 #include <driver/i2s_std.h>
 #include <driver/spi_master.h>
+
 #include <esp_log.h>
 
 #include <esp_lvgl_port.h>
@@ -12,6 +10,8 @@
 #include <esp_lcd_gc9a01.h>
 #include <esp_lcd_panel_io.h>
 #include <esp_lcd_panel_ops.h>
+
+#include "vapi-icon.h"
 
 #define AUDIO_CODEC_I2C_SDA_PIN GPIO_NUM_38
 #define AUDIO_CODEC_I2C_SCL_PIN GPIO_NUM_39
@@ -87,6 +87,13 @@ private:
   }
 };
 
+static lv_obj_t *spinning_img;
+static void spinner_set_angle(void *obj, int32_t v)
+{
+  lv_image_set_rotation((lv_obj_t *)obj, v);
+}
+
+
 class M5AtomS3 {
 public:
   i2c_master_bus_handle_t i2c_bus_;
@@ -109,7 +116,7 @@ public:
         .glitch_ignore_cnt = 7,
         .intr_priority = 0,
         .trans_queue_depth = 0,
-        .flags = { .enable_internal_pullup = 1 },
+        .flags = { .enable_internal_pullup = 1, .allow_pd = 0, },
     };
     ESP_ERROR_CHECK(i2c_new_master_bus(&i2c_bus_cfg, &i2c_bus_));
 
@@ -200,18 +207,32 @@ public:
       };
 
       auto display = lvgl_port_add_disp(&display_cfg);
-      if (display == nullptr) {
-          return;
-      }
+      assert(display != nullptr);
 
       lvgl_port_lock(portMAX_DELAY);
 
       lv_display_set_offset(display, 0, 32);
       lv_obj_t *scr = lv_disp_get_scr_act(display);
 
-      lv_obj_t *label = lv_label_create(scr);
-      lv_label_set_text(label, "Hello World");
-      lv_obj_center(label);
+      lv_obj_set_style_bg_color(scr, lv_color_black(), LV_PART_MAIN);
+      lv_obj_set_style_bg_opa(scr, LV_OPA_COVER, LV_PART_MAIN);
+
+      spinning_img = lv_image_create(scr);
+      lv_image_set_src(spinning_img, &vapi_icon);
+      lv_obj_center(spinning_img);
+
+      lv_image_set_pivot(spinning_img, vapi_icon.header.w / 2, vapi_icon.header.h / 2);
+
+      lv_image_set_antialias(spinning_img, true);
+
+      lv_anim_t a;
+      lv_anim_init(&a);
+      lv_anim_set_var(&a, spinning_img);
+      lv_anim_set_exec_cb(&a, spinner_set_angle);
+      lv_anim_set_duration(&a, 5000);
+      lv_anim_set_values(&a, 0, 3600);
+      lv_anim_set_repeat_count(&a, LV_ANIM_REPEAT_INFINITE);
+      lv_anim_start(&a);
 
       lvgl_port_unlock();
   }
