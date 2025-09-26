@@ -34,10 +34,6 @@ esp_err_t oai_http_event_handler(esp_http_client_event_t *evt) {
       break;
     case HTTP_EVENT_ON_DATA: {
       ESP_LOGD(LOG_TAG_HTTP, "HTTP_EVENT_ON_DATA, len=%d", evt->data_len);
-      if (esp_http_client_is_chunked_response(evt->client)) {
-        ESP_LOGE(LOG_TAG_HTTP, "Chunked HTTP response not supported");
-      }
-
       if (output_len == 0 && evt->user_data) {
         memset(evt->user_data, 0, HTTP_BUFFER_SIZE);
       }
@@ -132,7 +128,7 @@ void do_http_request(const char *offer, char *answer) {
   esp_http_client_set_post_field(client, body, strlen(body));
 
   esp_err_t err = esp_http_client_perform(client);
-  if (err != ESP_OK || esp_http_client_get_status_code(client) != 201) {
+  if (err != ESP_OK || esp_http_client_get_status_code(client) != 200) {
     ESP_LOGE(LOG_TAG_HTTP, "Error perform http request %s", esp_err_to_name(err));
   }
 

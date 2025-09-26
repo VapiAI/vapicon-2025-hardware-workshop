@@ -3,12 +3,10 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
 #include "freertos/task.h"
-#include <cstring>
 
+#include <cstring>
 #include <string>
-#include <sstream>
-#include <iostream>
-#include <string>
+#include <string_view>
 
 #define TICK_INTERVAL 15
 PeerConnection *peer_connection = NULL;
@@ -35,24 +33,37 @@ void send_audio_task(void *user_data) {
 
 
 std::string filterCandidates(const std::string& sdp) {
-    std::istringstream iss(sdp);
-    std::ostringstream oss;
-    std::string line;
+    std::string out;
+    out.reserve(sdp.size());
     bool keptRelay = false;
 
-    while (std::getline(iss, line)) {
-        if (line.rfind("a=candidate", 0) == 0) {
+    size_t pos = 0;
+    const size_t n = sdp.size();
+
+    while (pos < n) {
+        size_t end = sdp.find('\n', pos);
+        if (end == std::string::npos) end = n;
+
+        std::string_view line(&sdp[pos], end - pos);
+
+        const bool isCandidate = line.size() >= 11 && line.rfind("a=candidate", 0) == 0;
+        if (isCandidate) {
             if (!keptRelay && line.find("typ relay raddr") != std::string::npos) {
-                oss << line << "\n";
+                out.append(line.data(), line.size());
+                out.push_back('\n');
                 keptRelay = true;
             }
         } else {
-            oss << line << "\n";
+            out.append(line.data(), line.size());
+            out.push_back('\n');
         }
+
+        pos = (end < n) ? end + 1 : end;
     }
 
-    return oss.str();
+    return out;
 }
+
 
 void webrtc_create() {
   peer_init();
@@ -74,23 +85,35 @@ void webrtc_create() {
 
   peer_connection_oniceconnectionstatechange(
       peer_connection, [](PeerConnectionState state, void *user_data) -> void {
-        if (state == PEER_CONNECTION_CONNECTED) {
+        if (state == PEER_CONNECTION_CLOSED) {
+          ESP_LOGI("WebRTC", "PEER_CONNECTION_CLOSED");
+        } else if (state == PEER_CONNECTION_NEW) {
+          ESP_LOGI("WebRTC", "PEER_CONNECTION_NEW");
+        } else if (state == PEER_CONNECTION_CHECKING) {
+          ESP_LOGI("WebRTC", "PEER_CONNECTION_CHECKING");
+        } else if (state == PEER_CONNECTION_CONNECTED) {
+          ESP_LOGI("WebRTC", "PEER_CONNECTION_CONNECTED");
           // StackType_t *stack_memory = (StackType_t *)heap_caps_malloc(
           //     30000 * sizeof(StackType_t), MALLOC_CAP_SPIRAM);
           // assert(stack_memory != nullptr);
           // xTaskCreateStaticPinnedToCore(
           //     reflect_send_audio_task, "audio_publisher", 30000,
           //     peer_connection, 7, stack_memory, &send_audio_task_buffer, 0);
+        } else if (state == PEER_CONNECTION_COMPLETED) {
+          ESP_LOGI("WebRTC", "PEER_CONNECTION_COMPLETED");
+        } else if (state == PEER_CONNECTION_FAILED) {
+          ESP_LOGI("WebRTC", "PEER_CONNECTION_FAILED");
+        } else if (state == PEER_CONNECTION_DISCONNECTED) {
+          ESP_LOGI("WebRTC", "PEER_CONNECTION_DISCONNECTED");
         }
       });
 
-  std::string answer(HTTP_BUFFER_SIZE, '\0');
   const char* offer = peer_connection_create_offer(peer_connection);
+  std::string answer(HTTP_BUFFER_SIZE, '\0');
+
   do_http_request(offer, (char *) answer.c_str());
-
   answer = filterCandidates(answer);
-
-  printf("\n ANSWER %s \n", answer.c_str());
+  peer_connection_set_remote_description(peer_connection, answer.c_str(), SDP_TYPE_ANSWER);
 
   while (true) {
     peer_connection_loop(peer_connection);
