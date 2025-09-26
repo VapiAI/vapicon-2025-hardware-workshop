@@ -1,12 +1,12 @@
+#include <cstring>
+#include <string>
+#include <string_view>
+
 #include "cJSON.h"
 #include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
 #include "freertos/task.h"
-
-#include <cstring>
-#include <string>
-#include <string_view>
 
 #define TICK_INTERVAL 15
 PeerConnection *peer_connection = NULL;
@@ -20,7 +20,7 @@ void send_audio_task(void *user_data) {
     // pull from board
     // encode via opus
     // send audio
-    //reflect_send_audio(peer_connection);
+    // reflect_send_audio(peer_connection);
 
     int64_t elapsed_us = esp_timer_get_time() - start_us;
     int64_t ms_sleep = TICK_INTERVAL - (elapsed_us / 1000);
@@ -31,50 +31,51 @@ void send_audio_task(void *user_data) {
   }
 }
 
+std::string filterCandidates(const std::string &sdp) {
+  std::string out;
+  out.reserve(sdp.size());
+  bool keptRelay = false;
 
-std::string filterCandidates(const std::string& sdp) {
-    std::string out;
-    out.reserve(sdp.size());
-    bool keptRelay = false;
+  size_t pos = 0;
+  const size_t n = sdp.size();
 
-    size_t pos = 0;
-    const size_t n = sdp.size();
+  while (pos < n) {
+    size_t end = sdp.find('\n', pos);
+    if (end == std::string::npos)
+      end = n;
 
-    while (pos < n) {
-        size_t end = sdp.find('\n', pos);
-        if (end == std::string::npos) end = n;
+    std::string_view line(&sdp[pos], end - pos);
 
-        std::string_view line(&sdp[pos], end - pos);
-
-        const bool isCandidate = line.size() >= 11 && line.rfind("a=candidate", 0) == 0;
-        if (isCandidate) {
-            if (!keptRelay && line.find("typ relay raddr") != std::string::npos) {
-                out.append(line.data(), line.size());
-                out.push_back('\n');
-                keptRelay = true;
-            }
-        } else {
-            out.append(line.data(), line.size());
-            out.push_back('\n');
-        }
-
-        pos = (end < n) ? end + 1 : end;
+    const bool isCandidate =
+        line.size() >= 11 && line.rfind("a=candidate", 0) == 0;
+    if (isCandidate) {
+      if (!keptRelay && line.find("typ relay raddr") != std::string::npos) {
+        out.append(line.data(), line.size());
+        out.push_back('\n');
+        keptRelay = true;
+      }
+    } else {
+      out.append(line.data(), line.size());
+      out.push_back('\n');
     }
 
-    return out;
-}
+    pos = (end < n) ? end + 1 : end;
+  }
 
+  return out;
+}
 
 void webrtc_create() {
   peer_init();
 
   PeerConfiguration peer_connection_config = {
-      .ice_servers = {{.urls = "stun:stun.cloudflare.com:3478", .username = nullptr, .credential = nullptr}},
+      .ice_servers = {{.urls = "stun:stun.cloudflare.com:3478",
+                       .username = nullptr,
+                       .credential = nullptr}},
       .audio_codec = CODEC_OPUS,
       .video_codec = CODEC_NONE,
       .datachannel = DATA_CHANNEL_STRING,
-      .onaudiotrack = [](uint8_t *data, size_t size, void *userdata) -> void {
-      },
+      .onaudiotrack = [](uint8_t *data, size_t size, void *userdata) -> void {},
       .onvideotrack = NULL,
       .on_request_keyframe = NULL,
       .user_data = NULL,
@@ -108,12 +109,13 @@ void webrtc_create() {
         }
       });
 
-  const char* offer = peer_connection_create_offer(peer_connection);
+  const char *offer = peer_connection_create_offer(peer_connection);
   std::string answer(HTTP_BUFFER_SIZE, '\0');
 
-  do_http_request(offer, (char *) answer.c_str());
+  do_http_request(offer, (char *)answer.c_str());
   answer = filterCandidates(answer);
-  peer_connection_set_remote_description(peer_connection, answer.c_str(), SDP_TYPE_ANSWER);
+  peer_connection_set_remote_description(peer_connection, answer.c_str(),
+                                         SDP_TYPE_ANSWER);
 
   while (true) {
     peer_connection_loop(peer_connection);

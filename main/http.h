@@ -1,9 +1,8 @@
+#include <cJSON.h>
+#include <esp_crt_bundle.h>
 #include <esp_http_client.h>
 #include <esp_log.h>
 #include <string.h>
-#include <esp_crt_bundle.h>
-#include <cJSON.h>
-
 
 #ifndef MIN
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
@@ -64,48 +63,48 @@ esp_err_t oai_http_event_handler(esp_http_client_event_t *evt) {
   return ESP_OK;
 }
 
-static char *build_body_json(const char *sdp)
-{
-    cJSON *root = cJSON_CreateObject();
-    assert(root != nullptr);
+static char *build_body_json(const char *sdp) {
+  cJSON *root = cJSON_CreateObject();
+  assert(root != nullptr);
 
-    cJSON_AddStringToObject(root, "sdp", sdp);
+  cJSON_AddStringToObject(root, "sdp", sdp);
 
-    // assistant object
-    cJSON *assistant = cJSON_AddObjectToObject(root, "assistant");
-    assert(assistant != nullptr);
-    cJSON_AddStringToObject(assistant, "assistantId", "0a46e2bc-8950-4a05-9970-cd239a47ad01");
+  // assistant object
+  cJSON *assistant = cJSON_AddObjectToObject(root, "assistant");
+  assert(assistant != nullptr);
+  cJSON_AddStringToObject(assistant, "assistantId",
+                          "0a46e2bc-8950-4a05-9970-cd239a47ad01");
 
-    // assistantOverrides
-    cJSON *overrides = cJSON_AddObjectToObject(assistant, "assistantOverrides");
-    assert(overrides != nullptr);
+  // assistantOverrides
+  cJSON *overrides = cJSON_AddObjectToObject(assistant, "assistantOverrides");
+  assert(overrides != nullptr);
 
-    // clientMessages array
-    cJSON *client_msgs = cJSON_AddArrayToObject(overrides, "clientMessages");
-    assert(client_msgs != nullptr);
+  // clientMessages array
+  cJSON *client_msgs = cJSON_AddArrayToObject(overrides, "clientMessages");
+  assert(client_msgs != nullptr);
 
-    cJSON_AddItemToArray(client_msgs, cJSON_CreateString("transfer-update"));
-    cJSON_AddItemToArray(client_msgs, cJSON_CreateString("transcript"));
+  cJSON_AddItemToArray(client_msgs, cJSON_CreateString("transfer-update"));
+  cJSON_AddItemToArray(client_msgs, cJSON_CreateString("transcript"));
 
-    char *json = cJSON_PrintUnformatted(root);
-    cJSON_Delete(root);
-    return json;
+  char *json = cJSON_PrintUnformatted(root);
+  cJSON_Delete(root);
+  return json;
 }
 
 void extract_sdp_from_json(char *body) {
-    assert(body != nullptr);
+  assert(body != nullptr);
 
-    cJSON* root = cJSON_Parse(body);
-    assert(root != nullptr);
+  cJSON *root = cJSON_Parse(body);
+  assert(root != nullptr);
 
-    const cJSON* sdp = cJSON_GetObjectItemCaseSensitive(root, "sdp");
+  const cJSON *sdp = cJSON_GetObjectItemCaseSensitive(root, "sdp");
 
-    if (cJSON_IsString(sdp) && sdp->valuestring) {
-      memcpy(body, sdp->valuestring, strlen(sdp->valuestring));
-      body[strlen(sdp->valuestring)] = 0;
-    }
+  if (cJSON_IsString(sdp) && sdp->valuestring) {
+    memcpy(body, sdp->valuestring, strlen(sdp->valuestring));
+    body[strlen(sdp->valuestring)] = 0;
+  }
 
-    cJSON_Delete(root);
+  cJSON_Delete(root);
 }
 
 void do_http_request(const char *offer, char *answer) {
@@ -129,7 +128,8 @@ void do_http_request(const char *offer, char *answer) {
 
   esp_err_t err = esp_http_client_perform(client);
   if (err != ESP_OK || esp_http_client_get_status_code(client) != 200) {
-    ESP_LOGE(LOG_TAG_HTTP, "Error perform http request %s", esp_err_to_name(err));
+    ESP_LOGE(LOG_TAG_HTTP, "Error perform http request %s",
+             esp_err_to_name(err));
   }
 
   free(body);
