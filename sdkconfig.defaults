@@ -21,6 +21,7 @@ CONFIG_COMPILER_OPTIMIZATION_PERF=y
 CONFIG_MBEDTLS_SSL_PROTO_DTLS=y
 
 # Defaults to partitions.csv
+CONFIG_ESPTOOLPY_FLASH_SIZE=4MB
 CONFIG_PARTITION_TABLE_CUSTOM=y
 
 # libpeer requires large stack allocations

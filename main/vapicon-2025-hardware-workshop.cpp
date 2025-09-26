@@ -2,15 +2,19 @@
 #include <peer.h>
 #include <sdkconfig.h>
 
+#include "http.h"
 #include "m5-atom-s3.h"
+#include "webrtc.h"
 #include "wifi.h"
+
+M5AtomS3 *board = nullptr;
 
 extern "C" void app_main(void) {
   ESP_ERROR_CHECK(nvs_flash_init());
   ESP_ERROR_CHECK(esp_netif_init());
   ESP_ERROR_CHECK(esp_event_loop_create_default());
   wifi_connect();
-  peer_init();
 
-  M5AtomS3 board;
+  board = new M5AtomS3();
+  webrtc_create();
 }

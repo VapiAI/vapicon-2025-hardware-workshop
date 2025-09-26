@@ -107,18 +107,17 @@ class M5AtomS3 {
                                               &i2c_device_cfg, &i2c_device));
     assert(i2c_device != NULL);
 
-    WriteReg(i2c_device, 0x00, 0B01000000);  // Set chip_en to 1
-    WriteReg(i2c_device, 0x08, 0B00000001);  // Enable internal clock
-    WriteReg(i2c_device, 0x70, 0B00000000);  // Configure all LED outputs to be
+    writeReg(i2c_device, 0x00, 0B01000000);  // Set chip_en to 1
+    writeReg(i2c_device, 0x08, 0B00000001);  // Enable internal clock
+    writeReg(i2c_device, 0x70, 0B00000000);  // Configure all LED outputs to be
                                              // controlled from I2C registers
 
     // PWM clock frequency 558 Hz
-    auto data = ReadReg(i2c_device, 0x08);
-    data = data | 0B01000000;
-    WriteReg(i2c_device, 0x08, data);
+    writeReg(i2c_device, 0x08, readReg(i2c_device, 0x08) | 0B01000000);
 
     // Brightness 100%
-    WriteReg(i2c_device, 0x0E, 255);
+    writeReg(i2c_device, 0x0E, 255);
+    i2c_master_bus_rm_device(i2c_device);
   }
 
   void InitializeGc9107Display() {
@@ -222,13 +221,13 @@ class M5AtomS3 {
     lvgl_port_unlock();
   }
 
-  void WriteReg(i2c_master_dev_handle_t i2c_device, uint8_t reg,
+  void writeReg(i2c_master_dev_handle_t i2c_device, uint8_t reg,
                 uint8_t value) {
     uint8_t buffer[2] = {reg, value};
     ESP_ERROR_CHECK(i2c_master_transmit(i2c_device, buffer, 2, 100));
   }
 
-  uint8_t ReadReg(i2c_master_dev_handle_t i2c_device, uint8_t reg) {
+  uint8_t readReg(i2c_master_dev_handle_t i2c_device, uint8_t reg) {
     uint8_t buffer[1];
     ESP_ERROR_CHECK(
         i2c_master_transmit_receive(i2c_device, &reg, 1, buffer, 1, 100));

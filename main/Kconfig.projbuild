@@ -12,4 +12,10 @@ menu "VapiCon 2025 Hardware Workshop Configuration"
         help
             Enter your Wifi network password
 
+    config BEARER_TOKEN
+        string "Bearer Token"
+        default ""
+        help
+            Enter your Vapi Bearer Token
+
 endmenu
