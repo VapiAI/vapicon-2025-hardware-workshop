@@ -56,12 +56,50 @@ class M5AtomS3 {
     lv_image_set_rotation((lv_obj_t *)obj, v);
   }
 
+  void ShowLogs(const char* log) {
+      lvgl_port_lock(portMAX_DELAY);
+      lv_label_set_text(label_, log);
+      lvgl_port_unlock();
+  }
+
+  void ShowVAPILogo(void) {
+    lvgl_port_lock(portMAX_DELAY);
+
+    lv_obj_del(label_);
+
+    lv_obj_t *scr = lv_disp_get_scr_act(display);
+
+    lv_obj_set_style_bg_color(scr, lv_color_black(), LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(scr, LV_OPA_COVER, LV_PART_MAIN);
+
+    spinning_img = lv_image_create(scr);
+    lv_image_set_src(spinning_img, &vapi_icon);
+    lv_obj_center(spinning_img);
+
+    lv_image_set_pivot(spinning_img, vapi_icon.header.w / 2,
+                       vapi_icon.header.h / 2);
+    lv_image_set_antialias(spinning_img, true);
+
+    lv_anim_t a;
+    lv_anim_init(&a);
+    lv_anim_set_var(&a, spinning_img);
+    lv_anim_set_exec_cb(&a, spinner_set_angle);
+    lv_anim_set_duration(&a, 5000);
+    lv_anim_set_values(&a, 0, 3600);
+    lv_anim_set_repeat_count(&a, LV_ANIM_REPEAT_INFINITE);
+    lv_anim_start(&a);
+
+    lvgl_port_unlock();
+  }
+
  private:
   i2c_master_bus_handle_t i2c_bus_;
   i2c_master_bus_handle_t i2c_bus_internal_;
   esp_codec_dev_handle_t audio_dev;
 
   lv_obj_t *spinning_img = nullptr;
+  lv_disp_t *display = nullptr;
+  lv_obj_t *label_ = nullptr;
 
   void InitializeI2c() {
     i2c_master_bus_config_t i2c_bus_cfg = {
@@ -153,6 +191,7 @@ class M5AtomS3 {
         .dma_frame_num = 240,
         .auto_clear_after_cb = true,
         .auto_clear_before_cb = false,
+        .allow_pd = false,
         .intr_priority = 0,
     };
 
@@ -166,6 +205,7 @@ class M5AtomS3 {
                 .clk_src = I2S_CLK_SRC_DEFAULT,
                 .ext_clk_freq_hz = 0,
                 .mclk_multiple = I2S_MCLK_MULTIPLE_256,
+                .bclk_div = false,
             },
         .slot_cfg = {.data_bit_width = I2S_DATA_BIT_WIDTH_16BIT,
                      .slot_bit_width = I2S_SLOT_BIT_WIDTH_AUTO,
@@ -199,13 +239,16 @@ class M5AtomS3 {
         .addr = ES8311_CODEC_DEFAULT_ADDR,
         .bus_handle = i2c_bus_,
     };
-    es8311_codec_cfg_t es8311_cfg = {
-        .ctrl_if = audio_codec_new_i2c_ctrl(&i2c_cfg),
-        .gpio_if = audio_codec_new_gpio(),
-        .codec_mode = ESP_CODEC_DEV_WORK_MODE_BOTH,
-        .pa_pin = GPIO_NUM_NC,
-        .use_mclk = false,
-        .hw_gain = {.pa_voltage = 5.0, .codec_dac_voltage = 3.3}};
+
+    es8311_codec_cfg_t es8311_cfg;
+    memset(&es8311_cfg, 0, sizeof(es8311_cfg));
+
+    es8311_cfg.ctrl_if = audio_codec_new_i2c_ctrl(&i2c_cfg);
+    es8311_cfg.gpio_if = audio_codec_new_gpio();
+    es8311_cfg.codec_mode = ESP_CODEC_DEV_WORK_MODE_BOTH;
+    es8311_cfg.pa_pin = GPIO_NUM_NC;
+    es8311_cfg.hw_gain.pa_voltage = 5.0;
+    es8311_cfg.hw_gain.codec_dac_voltage = 3.3;
 
     esp_codec_dev_cfg_t dev_cfg = {
         .dev_type = ESP_CODEC_DEV_TYPE_IN_OUT,
@@ -295,33 +338,17 @@ class M5AtomS3 {
             },
     };
 
-    auto display = lvgl_port_add_disp(&display_cfg);
+    display = lvgl_port_add_disp(&display_cfg);
     assert(display != nullptr);
 
     lvgl_port_lock(portMAX_DELAY);
 
     lv_display_set_offset(display, 0, 32);
-    lv_obj_t *scr = lv_disp_get_scr_act(display);
+    lv_obj_set_style_bg_color(lv_scr_act(), lv_color_black(), 0);
 
-    lv_obj_set_style_bg_color(scr, lv_color_black(), LV_PART_MAIN);
-    lv_obj_set_style_bg_opa(scr, LV_OPA_COVER, LV_PART_MAIN);
-
-    spinning_img = lv_image_create(scr);
-    lv_image_set_src(spinning_img, &vapi_icon);
-    lv_obj_center(spinning_img);
-
-    lv_image_set_pivot(spinning_img, vapi_icon.header.w / 2,
-                       vapi_icon.header.h / 2);
-    lv_image_set_antialias(spinning_img, true);
-
-    lv_anim_t a;
-    lv_anim_init(&a);
-    lv_anim_set_var(&a, spinning_img);
-    lv_anim_set_exec_cb(&a, spinner_set_angle);
-    lv_anim_set_duration(&a, 5000);
-    lv_anim_set_values(&a, 0, 3600);
-    lv_anim_set_repeat_count(&a, LV_ANIM_REPEAT_INFINITE);
-    lv_anim_start(&a);
+    label_ = lv_label_create(lv_scr_act());
+    lv_obj_set_style_text_color(label_, lv_palette_main(LV_PALETTE_GREEN), 0);
+    lv_obj_center(label_);
 
     lvgl_port_unlock();
   }

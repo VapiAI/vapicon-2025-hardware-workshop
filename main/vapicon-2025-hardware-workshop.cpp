@@ -7,14 +7,18 @@
 #include "webrtc.h"
 #include "wifi.h"
 
-M5AtomS3 *board = nullptr;
+
 
 extern "C" void app_main(void) {
+  auto board = new M5AtomS3();
+
+  board->ShowLogs("Connecting to Wifi");
+
   ESP_ERROR_CHECK(nvs_flash_init());
   ESP_ERROR_CHECK(esp_netif_init());
   ESP_ERROR_CHECK(esp_event_loop_create_default());
   wifi_connect();
 
-  board = new M5AtomS3();
-  webrtc_create();
+  board->ShowLogs("Creating PeerConnection");
+  webrtc_create(board);
 }

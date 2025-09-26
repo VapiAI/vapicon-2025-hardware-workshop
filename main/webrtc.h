@@ -64,7 +64,10 @@ std::string filterCandidates(const std::string &sdp) {
   return out;
 }
 
-void webrtc_create() {
+M5AtomS3 *board = nullptr;
+
+void webrtc_create(M5AtomS3 *b) {
+  board = b;
   peer_init();
 
   PeerConfiguration peer_connection_config = {
@@ -92,6 +95,7 @@ void webrtc_create() {
         } else if (state == PEER_CONNECTION_CHECKING) {
           ESP_LOGI("WebRTC", "PEER_CONNECTION_CHECKING");
         } else if (state == PEER_CONNECTION_CONNECTED) {
+          board->ShowVAPILogo();
           StackType_t *stack_memory = (StackType_t *)heap_caps_malloc(
               30000 * sizeof(StackType_t), MALLOC_CAP_SPIRAM);
           assert(stack_memory != nullptr);
@@ -111,10 +115,13 @@ void webrtc_create() {
   const char *offer = peer_connection_create_offer(peer_connection);
   std::string answer(HTTP_BUFFER_SIZE, '\0');
 
+  board->ShowLogs("VAPI Signaling");
   do_http_request(offer, (char *)answer.c_str());
   answer = filterCandidates(answer);
   peer_connection_set_remote_description(peer_connection, answer.c_str(),
                                          SDP_TYPE_ANSWER);
+
+  board->ShowLogs("WebRTC Connecting");
 
   while (true) {
     peer_connection_loop(peer_connection);
