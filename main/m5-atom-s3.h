@@ -98,6 +98,16 @@ class M5AtomS3 {
     return gpio_get_level(BTN_PIN) == 0;
   }
 
+  void RecordAudio(void *dest, int size) {
+    ESP_ERROR_CHECK_WITHOUT_ABORT(
+        esp_codec_dev_read(audio_dev, (void *)dest, size));
+  }
+
+  void PlayAudio(void *data, int size) {
+    ESP_ERROR_CHECK_WITHOUT_ABORT(
+        esp_codec_dev_write(audio_dev, (void *)data, size));
+  }
+
  private:
   i2c_master_bus_handle_t i2c_bus_;
   i2c_master_bus_handle_t i2c_bus_internal_;

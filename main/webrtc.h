@@ -7,21 +7,31 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
 #include "freertos/task.h"
+#include "opus-coder.h"
 
 #define TICK_INTERVAL 15
+#define PCM_BUFFER_SIZE 640
+#define OPUS_BUFFER_SIZE 1276  // 1276 bytes is recommended by opus_encode
+
 PeerConnection *peer_connection = NULL;
 M5AtomS3 *board = nullptr;
+OpusCoder *opus_coder = nullptr;
 
 StaticTask_t send_audio_task_buffer;
 void send_audio_task(void *user_data) {
+  auto read_buffer =
+      (int16_t *)heap_caps_malloc(PCM_BUFFER_SIZE, MALLOC_CAP_DEFAULT);
+  auto encoder_output_buffer = (uint8_t *)malloc(OPUS_BUFFER_SIZE);
+
   while (1) {
     int64_t start_us = esp_timer_get_time();
 
     if (board->IsButtonPressed()) {
-      // pull from board
-      // encode via opus
-      // send audio
-      // reflect_send_audio(peer_connection);
+      board->RecordAudio(read_buffer, PCM_BUFFER_SIZE);
+      auto encoded_size =
+          opus_coder->Encode(read_buffer, encoder_output_buffer);
+      peer_connection_send_audio(peer_connection, encoder_output_buffer,
+                                 encoded_size);
     }
 
     int64_t elapsed_us = esp_timer_get_time() - start_us;
@@ -67,9 +77,15 @@ std::string filterCandidates(const std::string &sdp) {
   return out;
 }
 
+opus_int16 *decoder_buffer = NULL;
+
 void webrtc_create(M5AtomS3 *b) {
   board = b;
+  opus_coder = new OpusCoder();
   peer_init();
+
+  decoder_buffer = (opus_int16 *)malloc(PCM_BUFFER_SIZE);
+  assert(decoder_buffer != nullptr);
 
   PeerConfiguration peer_connection_config = {
       .ice_servers = {{.urls = "stun:stun.cloudflare.com:3478",
@@ -78,7 +94,12 @@ void webrtc_create(M5AtomS3 *b) {
       .audio_codec = CODEC_OPUS,
       .video_codec = CODEC_NONE,
       .datachannel = DATA_CHANNEL_STRING,
-      .onaudiotrack = [](uint8_t *data, size_t size, void *userdata) -> void {},
+      .onaudiotrack = [](uint8_t *data, size_t size, void *userdata) -> void {
+        auto decoded_size = opus_coder->Decode(data, size, decoder_buffer);
+        if (decoded_size > 0) {
+          board->PlayAudio(decoder_buffer, PCM_BUFFER_SIZE);
+        }
+      },
       .onvideotrack = NULL,
       .on_request_keyframe = NULL,
       .user_data = NULL,
