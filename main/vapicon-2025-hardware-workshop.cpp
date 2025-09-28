@@ -7,8 +7,6 @@
 #include "webrtc.h"
 #include "wifi.h"
 
-
-
 extern "C" void app_main(void) {
   auto board = new M5AtomS3();
 

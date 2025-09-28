@@ -14,6 +14,7 @@
 
 #define DISPLAY_WIDTH 128
 #define DISPLAY_HEIGHT 128
+#define BTN_PIN GPIO_NUM_41
 
 #define SAMPLE_RATE (16000)
 
@@ -50,16 +51,17 @@ class M5AtomS3 {
     this->InitializeSpi();
     this->InitializeGc9107Display();
     this->ConfigureES8311();
+    this->InitializeButton();
   }
 
   static void spinner_set_angle(void *obj, int32_t v) {
     lv_image_set_rotation((lv_obj_t *)obj, v);
   }
 
-  void ShowLogs(const char* log) {
-      lvgl_port_lock(portMAX_DELAY);
-      lv_label_set_text(label_, log);
-      lvgl_port_unlock();
+  void ShowLogs(const char *log) {
+    lvgl_port_lock(portMAX_DELAY);
+    lv_label_set_text(label_, log);
+    lvgl_port_unlock();
   }
 
   void ShowVAPILogo(void) {
@@ -90,6 +92,10 @@ class M5AtomS3 {
     lv_anim_start(&a);
 
     lvgl_port_unlock();
+  }
+
+  bool IsButtonPressed(void) {
+    return gpio_get_level(BTN_PIN) == 0;
   }
 
  private:
@@ -351,6 +357,15 @@ class M5AtomS3 {
     lv_obj_center(label_);
 
     lvgl_port_unlock();
+  }
+
+  void InitializeButton(void) {
+    gpio_config_t io = {.pin_bit_mask = 1ULL << BTN_PIN,
+                        .mode = GPIO_MODE_INPUT,
+                        .pull_up_en = GPIO_PULLUP_ENABLE,
+                        .pull_down_en = GPIO_PULLDOWN_DISABLE,
+                        .intr_type = GPIO_INTR_DISABLE};
+    ESP_ERROR_CHECK(gpio_config(&io));
   }
 
   void writeRegister(i2c_master_dev_handle_t i2c_device, uint8_t reg,

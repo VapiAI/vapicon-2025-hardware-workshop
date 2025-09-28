@@ -10,16 +10,19 @@
 
 #define TICK_INTERVAL 15
 PeerConnection *peer_connection = NULL;
+M5AtomS3 *board = nullptr;
 
 StaticTask_t send_audio_task_buffer;
 void send_audio_task(void *user_data) {
   while (1) {
     int64_t start_us = esp_timer_get_time();
 
-    // pull from board
-    // encode via opus
-    // send audio
-    // reflect_send_audio(peer_connection);
+    if (board->IsButtonPressed()) {
+      // pull from board
+      // encode via opus
+      // send audio
+      // reflect_send_audio(peer_connection);
+    }
 
     int64_t elapsed_us = esp_timer_get_time() - start_us;
     int64_t ms_sleep = TICK_INTERVAL - (elapsed_us / 1000);
@@ -63,8 +66,6 @@ std::string filterCandidates(const std::string &sdp) {
 
   return out;
 }
-
-M5AtomS3 *board = nullptr;
 
 void webrtc_create(M5AtomS3 *b) {
   board = b;
