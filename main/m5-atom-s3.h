@@ -103,7 +103,7 @@ class M5AtomS3 {
         esp_codec_dev_read(audio_dev, (void *)dest, size));
   }
 
-  void PlayAudio(void *data, int size) {
+  void PlayAudio(uint8_t *data, int size) {
     ESP_ERROR_CHECK_WITHOUT_ABORT(
         esp_codec_dev_write(audio_dev, (void *)data, size));
   }

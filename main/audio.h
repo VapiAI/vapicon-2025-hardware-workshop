@@ -9,6 +9,8 @@
 
 #define SAMPLE_RATE (16000)
 
+#define TAG "audio"
+
 class OpusCoder {
  public:
   OpusCoder() {
@@ -42,4 +44,41 @@ class OpusCoder {
  private:
   OpusDecoder *opus_decoder_ = nullptr;
   OpusEncoder *opus_encoder_ = nullptr;
+};
+
+QueueHandle_t audio_queue_;
+M5AtomS3 *m5_board = nullptr;
+uint8_t *audio_buffer = nullptr;
+
+class PacedAudioPlayer {
+public:
+  static void playback_task(void *arg) {
+    int32_t i;
+    for (;;) {
+      if (xQueueReceive(audio_queue_, &i, portMAX_DELAY) == pdPASS) {
+        m5_board->PlayAudio(audio_buffer + (i * PCM_BUFFER_SIZE), PCM_BUFFER_SIZE);
+        vTaskDelay(pdMS_TO_TICKS(20));
+      }
+    }
+  }
+
+  PacedAudioPlayer(M5AtomS3 *b) {
+    m5_board = b;
+    audio_buffer = (uint8_t*) calloc(PCM_BUFFER_SIZE * 3276, sizeof(uint8_t));
+    audio_queue_ = xQueueCreate(3276, sizeof(int32_t));
+
+    xTaskCreate(playback_task, "playback_task", 4096, NULL, 5, NULL);
+  }
+
+  void Queue(void *data) {
+    memcpy(audio_buffer + (current_buffer_ * PCM_BUFFER_SIZE), data, PCM_BUFFER_SIZE);
+    assert(xQueueSend(audio_queue_, &current_buffer_, portMAX_DELAY) == pdPASS);
+    current_buffer_++;
+    if (current_buffer_ >= 3275) {
+      current_buffer_ = 0;
+    }
+  }
+
+private:
+  int32_t current_buffer_ = 0;
 };
