@@ -7,8 +7,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
 #include "freertos/task.h"
-
-#include "audio.h"
+#include "opus-coder.h"
 
 #define TICK_INTERVAL 15
 #define PCM_BUFFER_SIZE 640
@@ -17,15 +16,11 @@
 PeerConnection *peer_connection = NULL;
 M5AtomS3 *board = nullptr;
 OpusCoder *opus_coder = nullptr;
-PacedAudioPlayer *paced_audio_player = nullptr;
-opus_int16 *decoder_buffer = NULL;
-
-// TODO when backend stops publishing invalid candidates we can remove this
-std::string filterCandidates(const std::string &sdp);
 
 StaticTask_t send_audio_task_buffer;
 void send_audio_task(void *user_data) {
-  auto read_buffer = (int16_t *)malloc(PCM_BUFFER_SIZE);
+  auto read_buffer =
+      (int16_t *)heap_caps_malloc(PCM_BUFFER_SIZE, MALLOC_CAP_DEFAULT);
   auto encoder_output_buffer = (uint8_t *)malloc(OPUS_BUFFER_SIZE);
 
   while (1) {
@@ -48,10 +43,45 @@ void send_audio_task(void *user_data) {
   }
 }
 
+std::string filterCandidates(const std::string &sdp) {
+  std::string out;
+  out.reserve(sdp.size());
+  bool keptRelay = false;
+
+  size_t pos = 0;
+  const size_t n = sdp.size();
+
+  while (pos < n) {
+    size_t end = sdp.find('\n', pos);
+    if (end == std::string::npos)
+      end = n;
+
+    std::string_view line(&sdp[pos], end - pos);
+
+    const bool isCandidate =
+        line.size() >= 11 && line.rfind("a=candidate", 0) == 0;
+    if (isCandidate) {
+      if (!keptRelay && line.find("typ relay raddr") != std::string::npos) {
+        out.append(line.data(), line.size());
+        out.push_back('\n');
+        keptRelay = true;
+      }
+    } else {
+      out.append(line.data(), line.size());
+      out.push_back('\n');
+    }
+
+    pos = (end < n) ? end + 1 : end;
+  }
+
+  return out;
+}
+
+opus_int16 *decoder_buffer = NULL;
+
 void webrtc_create(M5AtomS3 *b) {
   board = b;
   opus_coder = new OpusCoder();
-  paced_audio_player = new PacedAudioPlayer(board);
   peer_init();
 
   decoder_buffer = (opus_int16 *)malloc(PCM_BUFFER_SIZE);
@@ -67,7 +97,7 @@ void webrtc_create(M5AtomS3 *b) {
       .onaudiotrack = [](uint8_t *data, size_t size, void *userdata) -> void {
         auto decoded_size = opus_coder->Decode(data, size, decoder_buffer);
         if (decoded_size > 0) {
-          paced_audio_player->Queue(decoder_buffer);
+          board->PlayAudio(decoder_buffer, PCM_BUFFER_SIZE);
         }
       },
       .onvideotrack = NULL,
@@ -119,38 +149,4 @@ void webrtc_create(M5AtomS3 *b) {
     peer_connection_loop(peer_connection);
     vTaskDelay(pdMS_TO_TICKS(1));
   }
-}
-
-std::string filterCandidates(const std::string &sdp) {
-  std::string out;
-  out.reserve(sdp.size());
-  bool keptRelay = false;
-
-  size_t pos = 0;
-  const size_t n = sdp.size();
-
-  while (pos < n) {
-    size_t end = sdp.find('\n', pos);
-    if (end == std::string::npos)
-      end = n;
-
-    std::string_view line(&sdp[pos], end - pos);
-
-    const bool isCandidate =
-        line.size() >= 11 && line.rfind("a=candidate", 0) == 0;
-    if (isCandidate) {
-      if (!keptRelay && line.find("typ relay raddr") != std::string::npos) {
-        out.append(line.data(), line.size());
-        out.push_back('\n');
-        keptRelay = true;
-      }
-    } else {
-      out.append(line.data(), line.size());
-      out.push_back('\n');
-    }
-
-    pos = (end < n) ? end + 1 : end;
-  }
-
-  return out;
 }
