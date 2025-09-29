@@ -54,10 +54,6 @@ class M5AtomS3 {
     this->InitializeButton();
   }
 
-  static void spinner_set_angle(void *obj, int32_t v) {
-    lv_image_set_rotation((lv_obj_t *)obj, v);
-  }
-
   void ShowLogs(const char *log) {
     lvgl_port_lock(portMAX_DELAY);
     lv_label_set_text(label_, log);
@@ -74,22 +70,9 @@ class M5AtomS3 {
     lv_obj_set_style_bg_color(scr, lv_color_black(), LV_PART_MAIN);
     lv_obj_set_style_bg_opa(scr, LV_OPA_COVER, LV_PART_MAIN);
 
-    spinning_img = lv_image_create(scr);
-    lv_image_set_src(spinning_img, &vapi_icon);
-    lv_obj_center(spinning_img);
-
-    lv_image_set_pivot(spinning_img, vapi_icon.header.w / 2,
-                       vapi_icon.header.h / 2);
-    lv_image_set_antialias(spinning_img, true);
-
-    lv_anim_t a;
-    lv_anim_init(&a);
-    lv_anim_set_var(&a, spinning_img);
-    lv_anim_set_exec_cb(&a, spinner_set_angle);
-    lv_anim_set_duration(&a, 5000);
-    lv_anim_set_values(&a, 0, 3600);
-    lv_anim_set_repeat_count(&a, LV_ANIM_REPEAT_INFINITE);
-    lv_anim_start(&a);
+    auto img = lv_image_create(scr);
+    lv_image_set_src(img, &vapi_icon);
+    lv_obj_center(img);
 
     lvgl_port_unlock();
   }
@@ -113,7 +96,6 @@ class M5AtomS3 {
   i2c_master_bus_handle_t i2c_bus_internal_;
   esp_codec_dev_handle_t audio_dev;
 
-  lv_obj_t *spinning_img = nullptr;
   lv_disp_t *display = nullptr;
   lv_obj_t *label_ = nullptr;
 

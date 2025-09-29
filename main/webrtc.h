@@ -80,6 +80,7 @@ std::string filterCandidates(const std::string &sdp) {
 opus_int16 *decoder_buffer = NULL;
 
 void webrtc_create(M5AtomS3 *b) {
+  vTaskPrioritySet(xTaskGetCurrentTaskHandle(), 10);
   board = b;
   opus_coder = new OpusCoder();
   peer_init();
