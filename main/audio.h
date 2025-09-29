@@ -1,5 +1,4 @@
 #include <opus.h>
-#include <esp_timer.h>
 
 #define OPUS_BUFFER_SIZE 1276
 #define OPUS_ENCODER_BITRATE 30000
@@ -47,43 +46,39 @@ class OpusCoder {
   OpusEncoder *opus_encoder_ = nullptr;
 };
 
-MessageBufferHandle_t audio_buffer = nullptr;
-uint8_t *audio_buffer_storage = NULL;
-StaticStreamBuffer_t audio_buffer_ctrl;
-
-M5AtomS3 *board = nullptr;
-OpusCoder *opus_coder = nullptr;
+QueueHandle_t audio_queue_;
+M5AtomS3 *m5_board = nullptr;
+uint8_t *audio_buffer = nullptr;
 
 class PacedAudioPlayer {
 public:
   static void playback_task(void *arg) {
-    uint8_t opus_buffer[OPUS_BUFFER_SIZE];
-    auto decoder_buffer = (opus_int16 *)malloc(PCM_BUFFER_SIZE);
-    assert(decoder_buffer != nullptr);
-
+    int32_t i;
     for (;;) {
-      auto size = xMessageBufferReceive(audio_buffer, opus_buffer, sizeof(opus_buffer), portMAX_DELAY);
-      assert(size != 0);
-
-      auto decoded_size = opus_coder->Decode(opus_buffer, size, decoder_buffer);
-      assert(decoded_size != 0);
-
-      board->PlayAudio((uint8_t *) decoder_buffer, PCM_BUFFER_SIZE);
+      if (xQueueReceive(audio_queue_, &i, portMAX_DELAY) == pdPASS) {
+        m5_board->PlayAudio(audio_buffer + (i * PCM_BUFFER_SIZE), PCM_BUFFER_SIZE);
+        vTaskDelay(pdMS_TO_TICKS(20));
+      }
     }
   }
 
-  PacedAudioPlayer() {
-    auto size = 1024 * 1024;
-    audio_buffer_storage = (uint8_t*) malloc(size);
-    assert(audio_buffer_storage != nullptr);
+  PacedAudioPlayer(M5AtomS3 *b) {
+    m5_board = b;
+    audio_buffer = (uint8_t*) calloc(PCM_BUFFER_SIZE * 3276, sizeof(uint8_t));
+    audio_queue_ = xQueueCreate(3276, sizeof(int32_t));
 
-    audio_buffer = xMessageBufferCreateStatic(size, audio_buffer_storage, &audio_buffer_ctrl);
-    assert(audio_buffer != nullptr);
-
-    xTaskCreate(playback_task, "playback_task", 16384, NULL, 5, NULL);
+    xTaskCreate(playback_task, "playback_task", 4096, NULL, 5, NULL);
   }
 
-  void Queue(uint8_t *data, size_t size) {
-    assert(xMessageBufferSend(audio_buffer, data, size, 0) == size);
+  void Queue(void *data) {
+    memcpy(audio_buffer + (current_buffer_ * PCM_BUFFER_SIZE), data, PCM_BUFFER_SIZE);
+    assert(xQueueSend(audio_queue_, &current_buffer_, portMAX_DELAY) == pdPASS);
+    current_buffer_++;
+    if (current_buffer_ >= 3275) {
+      current_buffer_ = 0;
+    }
   }
+
+private:
+  int32_t current_buffer_ = 0;
 };

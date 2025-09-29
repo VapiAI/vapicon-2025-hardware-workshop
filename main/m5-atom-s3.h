@@ -59,14 +59,12 @@ class M5AtomS3 {
   }
 
   void ShowLogs(const char *log) {
-    return;
     lvgl_port_lock(portMAX_DELAY);
     lv_label_set_text(label_, log);
     lvgl_port_unlock();
   }
 
   void ShowVAPILogo(void) {
-    return;
     lvgl_port_lock(portMAX_DELAY);
 
     lv_obj_del(label_);

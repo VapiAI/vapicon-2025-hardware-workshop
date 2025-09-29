@@ -8,12 +8,17 @@
 #include "freertos/semphr.h"
 #include "freertos/task.h"
 
+#include "audio.h"
+
 #define TICK_INTERVAL 15
 #define PCM_BUFFER_SIZE 640
 #define OPUS_BUFFER_SIZE 1276  // 1276 bytes is recommended by opus_encode
 
 PeerConnection *peer_connection = NULL;
+M5AtomS3 *board = nullptr;
+OpusCoder *opus_coder = nullptr;
 PacedAudioPlayer *paced_audio_player = nullptr;
+opus_int16 *decoder_buffer = NULL;
 
 // TODO when backend stops publishing invalid candidates we can remove this
 std::string filterCandidates(const std::string &sdp);
@@ -28,9 +33,10 @@ void send_audio_task(void *user_data) {
 
     if (board->IsButtonPressed()) {
       board->RecordAudio(read_buffer, PCM_BUFFER_SIZE);
-      auto encoded_size = opus_coder->Encode(read_buffer, encoder_output_buffer);
+      auto encoded_size =
+          opus_coder->Encode(read_buffer, encoder_output_buffer);
       peer_connection_send_audio(peer_connection, encoder_output_buffer,
-          encoded_size);
+                                 encoded_size);
     }
 
     int64_t elapsed_us = esp_timer_get_time() - start_us;
@@ -43,10 +49,13 @@ void send_audio_task(void *user_data) {
 }
 
 void webrtc_create(M5AtomS3 *b) {
-  vTaskPrioritySet(xTaskGetCurrentTaskHandle(), 10);
-
+  board = b;
+  opus_coder = new OpusCoder();
+  paced_audio_player = new PacedAudioPlayer(board);
   peer_init();
-  paced_audio_player = new PacedAudioPlayer();
+
+  decoder_buffer = (opus_int16 *)malloc(PCM_BUFFER_SIZE);
+  assert(decoder_buffer != nullptr);
 
   PeerConfiguration peer_connection_config = {
       .ice_servers = {{.urls = "stun:stun.cloudflare.com:3478",
@@ -56,7 +65,10 @@ void webrtc_create(M5AtomS3 *b) {
       .video_codec = CODEC_NONE,
       .datachannel = DATA_CHANNEL_STRING,
       .onaudiotrack = [](uint8_t *data, size_t size, void *userdata) -> void {
-        paced_audio_player->Queue(data, size);
+        auto decoded_size = opus_coder->Decode(data, size, decoder_buffer);
+        if (decoded_size > 0) {
+          paced_audio_player->Queue(decoder_buffer);
+        }
       },
       .onvideotrack = NULL,
       .on_request_keyframe = NULL,
