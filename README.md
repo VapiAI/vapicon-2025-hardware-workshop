@@ -1,4 +1,4 @@
-# VapiCon 2025 Hardware Workshop - Setup Guide
+# VapiCon 2025 Hardware Workshop
 
 ## Prerequisites
 
