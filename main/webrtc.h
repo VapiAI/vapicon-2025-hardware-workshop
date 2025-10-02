@@ -111,13 +111,8 @@ void webrtc_create(M5AtomS3 *b) {
 
   peer_connection_oniceconnectionstatechange(
       peer_connection, [](PeerConnectionState state, void *user_data) -> void {
-        if (state == PEER_CONNECTION_CLOSED) {
-          ESP_LOGI("WebRTC", "PEER_CONNECTION_CLOSED");
-        } else if (state == PEER_CONNECTION_NEW) {
-          ESP_LOGI("WebRTC", "PEER_CONNECTION_NEW");
-        } else if (state == PEER_CONNECTION_CHECKING) {
-          ESP_LOGI("WebRTC", "PEER_CONNECTION_CHECKING");
-        } else if (state == PEER_CONNECTION_CONNECTED) {
+        ESP_LOGI("WebRTC", "state %s", peer_connection_state_to_string(state));
+        if (state == PEER_CONNECTION_CONNECTED) {
           board->ShowVAPILogo();
           StackType_t *stack_memory = (StackType_t *)heap_caps_malloc(
               30000 * sizeof(StackType_t), MALLOC_CAP_SPIRAM);
@@ -125,13 +120,8 @@ void webrtc_create(M5AtomS3 *b) {
           xTaskCreateStaticPinnedToCore(send_audio_task, "audio_publisher",
                                         30000, peer_connection, 7, stack_memory,
                                         &send_audio_task_buffer, 0);
-          ESP_LOGI("WebRTC", "PEER_CONNECTION_CONNECTED");
-        } else if (state == PEER_CONNECTION_COMPLETED) {
-          ESP_LOGI("WebRTC", "PEER_CONNECTION_COMPLETED");
-        } else if (state == PEER_CONNECTION_FAILED) {
-          ESP_LOGI("WebRTC", "PEER_CONNECTION_FAILED");
-        } else if (state == PEER_CONNECTION_DISCONNECTED) {
-          ESP_LOGI("WebRTC", "PEER_CONNECTION_DISCONNECTED");
+        } else if (state == PEER_CONNECTION_CLOSED || state == PEER_CONNECTION_FAILED || state == PEER_CONNECTION_DISCONNECTED) {
+          esp_restart();
         }
       });
 

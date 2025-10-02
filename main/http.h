@@ -130,6 +130,7 @@ void do_http_request(const char *offer, char *answer) {
   if (err != ESP_OK || esp_http_client_get_status_code(client) != 200) {
     ESP_LOGE(LOG_TAG_HTTP, "Error perform http request %s",
              esp_err_to_name(err));
+    esp_restart();
   }
 
   free(body);
