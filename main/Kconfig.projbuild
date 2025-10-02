@@ -12,10 +12,16 @@ menu "VapiCon 2025 Hardware Workshop Configuration"
         help
             Enter your Wifi network password
 
-    config BEARER_TOKEN
-        string "Bearer Token"
-        default ""
+    config VAPI_PUBLIC_KEY
+        string "Vapi Public Key"
+        default "b3db41dc-f62e-4ca8-89dc-550eab564212"
         help
-            Enter your Vapi Bearer Token
+            Enter your Vapi Public Key
+
+    config ASSISTANT_ID
+        string "Assistant ID"
+        default "0a46e2bc-8950-4a05-9970-cd239a47ad01"
+        help
+            Enter your Vapi Assistant ID
 
 endmenu

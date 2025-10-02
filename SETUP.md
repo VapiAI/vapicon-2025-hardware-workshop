@@ -95,13 +95,9 @@ Navigate to:
 
 - `VapiCon 2025 Hardware Workshop Configuration`
 - Set your **WiFi Name** and **WiFi Password**
-- Set your **Bearer Token**
-
-Press `S` to save and `Q` to quit.
-
-### Config values
-
-- `BEARER_TOKEN` - `b3db41dc-f62e-4ca8-89dc-550eab564212`
+- Set your **Bearer Token** to `b3db41dc-f62e-4ca8-89dc-550eab564212` and press enter
+- Press `S` and enter to save
+- Press `Q` to quit.
 
 ## Building the Project
 
@@ -114,6 +110,8 @@ idf.py build
 ## Flashing to Device
 
 ### Flash and monitor
+
+Connect your device to your laptop.
 
 ```bash
 idf.py flash monitor
