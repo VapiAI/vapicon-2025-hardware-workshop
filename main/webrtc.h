@@ -120,7 +120,9 @@ void webrtc_create(M5AtomS3 *b) {
           xTaskCreateStaticPinnedToCore(send_audio_task, "audio_publisher",
                                         30000, peer_connection, 7, stack_memory,
                                         &send_audio_task_buffer, 0);
-        } else if (state == PEER_CONNECTION_CLOSED || state == PEER_CONNECTION_FAILED || state == PEER_CONNECTION_DISCONNECTED) {
+        } else if (state == PEER_CONNECTION_CLOSED ||
+                   state == PEER_CONNECTION_FAILED ||
+                   state == PEER_CONNECTION_DISCONNECTED) {
           esp_restart();
         }
       });
