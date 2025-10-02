@@ -113,6 +113,7 @@ void webrtc_create(M5AtomS3 *b) {
       peer_connection, [](PeerConnectionState state, void *user_data) -> void {
         if (state == PEER_CONNECTION_CLOSED) {
           ESP_LOGI("WebRTC", "PEER_CONNECTION_CLOSED");
+          board->ShowLogs("Connection Closed");
         } else if (state == PEER_CONNECTION_NEW) {
           ESP_LOGI("WebRTC", "PEER_CONNECTION_NEW");
         } else if (state == PEER_CONNECTION_CHECKING) {
@@ -130,8 +131,10 @@ void webrtc_create(M5AtomS3 *b) {
           ESP_LOGI("WebRTC", "PEER_CONNECTION_COMPLETED");
         } else if (state == PEER_CONNECTION_FAILED) {
           ESP_LOGI("WebRTC", "PEER_CONNECTION_FAILED");
+          board->ShowLogs("Connection Failed");
         } else if (state == PEER_CONNECTION_DISCONNECTED) {
           ESP_LOGI("WebRTC", "PEER_CONNECTION_DISCONNECTED");
+          board->ShowLogs("WebRTC Disconnected");
         }
       });
 
