@@ -49,8 +49,10 @@
    ### Setting up Environment (Required for each terminal session)
 
    ```bash
-   # Add this to your ~/.bashrc or ~/.zshrc to avoid running it manually:
+   # Add this to your ~/.zshrc to avoid running it manually:
    alias get_idf='. ~/esp/esp-idf/export.sh'
+
+   # Open a new terminal to apply the changes
    
    # Then you can simply run:
    get_idf
@@ -67,7 +69,7 @@
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-repo/vapicon-2025-hardware-workshop.git
+git clone git@github.com:VapiAI/vapicon-2025-hardware-workshop.git
 cd vapicon-2025-hardware-workshop
 ```
 
@@ -96,6 +98,10 @@ Navigate to:
 - Set your **Bearer Token**
 
 Press `S` to save and `Q` to quit.
+
+### Config values
+
+- `BEARER_TOKEN` - `b3db41dc-f62e-4ca8-89dc-550eab564212`
 
 ## Building the Project
 
