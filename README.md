@@ -17,6 +17,8 @@ To get the project working, you need to:
 2. [Clone the repository and configure the settings: Wifi SSID, Password and your VAPI Bearer Token](#setup-project)
 3. [Build the program and flash it onto the device](#building-the-project)
 
+Step 1 and 2 only need to be done once. After the first time, you can keep editing the program and run 3 to build and flash the program onto the device.
+
 ## Install ESP-IDF 
 
 You will need v5.5.1 or later.
@@ -102,7 +104,7 @@ Press `S` to save and `Q` to quit.
 
 ## Building the Project
 
-To build the project, first build and then flash + monitor.
+To build the project, first run the build command. Connect your device to the machine with a USB-C wire and run the flash + monitor command.
 
 ```bash
 idf.py build #builds the program
