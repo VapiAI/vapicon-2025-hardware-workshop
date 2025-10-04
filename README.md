@@ -1,12 +1,29 @@
-# VapiCon 2025 Hardware Workshop
+# VapiKey - VapiCon 2025 Hardware Workshop
 
-## Prerequisites
+VapiKey is a hardware project that lets you talk to a VAPI AI assistant through a small physical device. It's got a mic, speaker, a tactical button and a little lcd screen. It also connects to your Wifi connection to communicate. You press the button, say a question, and the device responds with an answer.
 
-1. **ESP-IDF**: Install ESP-IDF v5.5.1 or later
+## Hardware
 
-   ### Quick Installation Steps
+These are the hardware components we used for this project
 
-   #### macOS/Linux
+   - [AtomS3R](https://docs.m5stack.com/en/core/AtomS3R) or [Atomic Echo Base](https://docs.m5stack.com/en/atom/Atomic%20Echo%20Base)
+   - [Atomic Battery Base](https://shop.m5stack.com/products/atomic-battery-base-200mah?srsltid=AfmBOoqrr_zX2RVCksgfggWRR2F-8hTZ4asWs7_DuLn3MWEXH9JYPSqN)
+
+## Getting Started
+
+To get the project working, you need to:
+
+1. [Install ESP-IDF on your machine](#install-esp-idf)
+2. [Clone the repository and configure the settings: Wifi SSID, Password and your VAPI Bearer Token](#setup-project)
+3. [Build the program and flash it onto the device](#building-the-project)
+
+Step 1 and 2 only need to be done once. After the first time, you can keep editing the program and run 3 to build and flash the program onto the device.
+
+## Install ESP-IDF 
+
+You will need v5.5.1 or later.
+
+#### macOS/Linux
 
    ```bash
    # Install prerequisites (macOS)
@@ -28,7 +45,7 @@
    source ~/esp/esp-idf/export.sh
    ```
 
-   #### Windows
+#### Windows
 
    ```powershell
    # Download and run the ESP-IDF installer from:
@@ -39,14 +56,14 @@
    export.bat
    ```
 
-   ### Verify Installation
+#### Verify Installation
 
    ```bash
    idf.py --version
    # Should output something like: ESP-IDF v5.5.1
    ```
 
-   ### Setting up Environment (Required for each terminal session)
+### Set up your Terminal (Required for each terminal session)
 
    ```bash
    # Add this to your ~/.zshrc to avoid running it manually:
@@ -58,16 +75,11 @@
    get_idf
    ```
 
-   **Full Documentation**: [Official ESP-IDF Installation Guide](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/index.html)
+**Full Documentation**: [Official ESP-IDF Installation Guide](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/index.html)
 
-2. **Hardware**:
-   - [AtomS3R](https://docs.m5stack.com/en/core/AtomS3R) or
-   - [Atomic Echo Base](https://docs.m5stack.com/en/atom/Atomic%20Echo%20Base)
-   - [Atomic Battery Base](https://shop.m5stack.com/products/atomic-battery-base-200mah?srsltid=AfmBOoqrr_zX2RVCksgfggWRR2F-8hTZ4asWs7_DuLn3MWEXH9JYPSqN)
+## Setup project
 
-## Project Setup
-
-### 1. Clone the Repository
+### 1. Clone Repo
 
 ```bash
 git clone --recurse-submodules https://github.com/VapiAI/vapicon-2025-hardware-workshop.git
@@ -86,34 +98,19 @@ Navigate to:
 
 - `VapiCon 2025 Hardware Workshop Configuration`
 - Set your **WiFi Name** and **WiFi Password**
-- Set your **Bearer Token**
+- Set your **Bearer Token**. You can either setup your own VAPI assistant and copy the API key or use this value that we've already set up for you: `b3db41dc-f62e-4ca8-89dc-550eab564212`
 
 Press `S` to save and `Q` to quit.
 
-### Config values
-
-- `BEARER_TOKEN` - `b3db41dc-f62e-4ca8-89dc-550eab564212`
-
 ## Building the Project
 
-### Build the firmware
+To build the project, first run the build command. Connect your device to the machine with a USB-C wire and run the flash + monitor command.
 
 ```bash
-idf.py build
+idf.py build #builds the program
+
+idf.py flash monitor #flashes it onto the device and opens the serial monitor
 ```
-
-## Flashing to Device
-
-### Flash and monitor
-
-```bash
-idf.py flash monitor
-```
-
-This command will:
-
-1. Flash the firmware to your connected ESP32-S3 device
-2. Open the serial monitor to view debug output
 
 To exit the monitor, press `Ctrl+]`.
 
