@@ -1,5 +1,7 @@
 # VapiCon 2025 Hardware Workshop
 
+[Demo Video](https://www.youtube.com/watch?v=gPuNpaL9ig8)
+
 ## Prerequisites
 
 1. **ESP-IDF**: Install ESP-IDF v5.5.1 or later
