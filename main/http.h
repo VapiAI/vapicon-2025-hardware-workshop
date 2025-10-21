@@ -72,8 +72,7 @@ static char *build_body_json(const char *sdp) {
   // assistant object
   cJSON *assistant = cJSON_AddObjectToObject(root, "assistant");
   assert(assistant != nullptr);
-  cJSON_AddStringToObject(assistant, "assistantId",
-                          CONFIG_ASSISTANT_ID);
+  cJSON_AddStringToObject(assistant, "assistantId", CONFIG_ASSISTANT_ID);
 
   // assistantOverrides
   cJSON *overrides = cJSON_AddObjectToObject(assistant, "assistantOverrides");
