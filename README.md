@@ -78,7 +78,7 @@ cd vapicon-2025-hardware-workshop
 
 ### 2. Configuration
 
-Run the configuration menu to set up your WiFi credentials and Bearer Token:
+Run the configuration menu to set up your WiFi credentials and Vapi Public Key:
 
 ```bash
 idf.py menuconfig
@@ -88,13 +88,9 @@ Navigate to:
 
 - `VapiCon 2025 Hardware Workshop Configuration`
 - Set your **WiFi Name** and **WiFi Password**
-- Set your **Bearer Token**
-
-Press `S` to save and `Q` to quit.
-
-### Config values
-
-- `BEARER_TOKEN` - `b3db41dc-f62e-4ca8-89dc-550eab564212`
+- Set your **Vapi Public Key** to `b3db41dc-f62e-4ca8-89dc-550eab564212` and press enter
+- Press `S` and enter to save
+- Press `Q` to quit.
 
 ## Building the Project
 

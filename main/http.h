@@ -72,8 +72,7 @@ static char *build_body_json(const char *sdp) {
   // assistant object
   cJSON *assistant = cJSON_AddObjectToObject(root, "assistant");
   assert(assistant != nullptr);
-  cJSON_AddStringToObject(assistant, "assistantId",
-                          "0a46e2bc-8950-4a05-9970-cd239a47ad01");
+  cJSON_AddStringToObject(assistant, "assistantId", CONFIG_ASSISTANT_ID);
 
   // assistantOverrides
   cJSON *overrides = cJSON_AddObjectToObject(assistant, "assistantOverrides");
@@ -116,7 +115,7 @@ void do_http_request(const char *offer, char *answer) {
   config.user_data = answer;
   config.crt_bundle_attach = esp_crt_bundle_attach;
 
-  snprintf(answer, HTTP_BUFFER_SIZE, "Bearer %s", CONFIG_BEARER_TOKEN);
+  snprintf(answer, HTTP_BUFFER_SIZE, "Bearer %s", CONFIG_VAPI_PUBLIC_KEY);
 
   esp_http_client_handle_t client = esp_http_client_init(&config);
   esp_http_client_set_method(client, HTTP_METHOD_POST);
