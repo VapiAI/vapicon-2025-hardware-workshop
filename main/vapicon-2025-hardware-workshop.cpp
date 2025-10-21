@@ -17,6 +17,6 @@ extern "C" void app_main(void) {
   ESP_ERROR_CHECK(esp_event_loop_create_default());
   wifi_connect();
 
-  board->ShowLogs("Creating PeerConnection");
+  board->ShowLogs("WebRTC Create");
   webrtc_create(board);
 }
